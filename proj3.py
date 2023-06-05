@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import argparse
 from sklearn.cluster import KMeans
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics.pairwise import euclidean_distances
@@ -39,12 +41,17 @@ def train_rbfn(X, y, num_centers, rbf_type, alpha=0.01):
         raise ValueError("Invalid RBF type")
     
     # activation layer
-    #X_h = 1 / (1 + np.exp(-X_transformed))
-    #X_h = np.exp(-X_transformed ** 2)
+    X_h = X_transformed # No activation function
+    if activation_function == 1: # Sigmoid
+        X_h = 1 / (1 + np.exp(-X_transformed))
+    elif activation_function == 2: # Gaussian
+        X_h = np.exp(-X_transformed ** 2)
+    elif activation_function == 3: # TanH
+        X_h = np.tanh(X_transformed)
 
     # Minimizes the objective function: ||y - Xw||^2_2 + alpha * ||w||^2_2
     model = Ridge(alpha=alpha)
-    model.fit(X_transformed, y)
+    model.fit(X_h, y)
 
     return model, centers
 
@@ -61,19 +68,37 @@ def predict_rbfn(X, model, centers, rbf_type):
     else:
         raise ValueError("Invalid RBF type")
     
-    
     # activation layer
-    #X_h = 1 / (1 + np.exp(-X_transformed))
-    #X_h = np.exp(-X_transformed ** 2)
+    X_h = X_transformed # No activation function
+    if activation_function == 1: # Sigmoid
+        X_h = 1 / (1 + np.exp(-X_transformed))
+    elif activation_function == 2: # Gaussian
+        X_h = np.exp(-X_transformed ** 2)
+    elif activation_function == 3: # TanH
+        X_h = np.tanh(X_transformed)
 
-    return model.predict(X_transformed)
+    return model.predict(X_h)
 
 # Set random seed for reproducibility
 np.random.seed(42)
 
+# Create Directories to save plots if they dont exist yet
+dir1, dir2 = "Images/Analysis/", "Images/Activation Functions/"
+dirs = [dir1, dir2]
+for dir in dirs:
+    isExist = os.path.exists(dir)
+    if not isExist:
+        # Create a new directory because it does not exist
+        os.makedirs(dir)
+   
+parser = argparse.ArgumentParser()
+parser.add_argument("--f", type=int, default=0, help="Activation Function. 1 = Sigmoid; 2 = Gaussian; 3 = TanH")
+opt = parser.parse_args()
+activation_function = opt.f
+
 # Generate data for two nonlinear functions
 # Sine Function
-x = np.linspace(-10, 10, 1000).reshape(-1, 1)
+x = np.linspace(-10, 10, 5000).reshape(-1, 1)
 # Split the data into train and test sets
 x1, X_test = train_test_split(x, test_size=0.3)
 x1, X_test = np.sort(x1, axis=0), np.sort(X_test, axis=0)
@@ -81,7 +106,7 @@ y1 = np.sin(x1) + np.random.normal(0, 0.1, x1.shape)
 y_test = np.sin(X_test) + np.random.normal(0, 0.1, X_test.shape)
 
 # Exponential Decay Function
-x = np.linspace(0, 400, 1000).reshape(-1, 1)
+x = np.linspace(0, 1000, 1000).reshape(-1, 1)
 x2, X_test2 = train_test_split(x, test_size=0.3)
 x2, X_test2 = np.sort(x2, axis=0), np.sort(X_test2, axis=0)
 y2 = np.exp(-x2 / 2) + np.random.normal(0, 0.05, x2.shape)
@@ -97,10 +122,13 @@ mse_values_test = []
 mse_values_train2 = []
 mse_values_test2 = []
 i = 1
+j = 0
 for rbf_type in rbf_types:
     for alpha in reg_values:
+        print(f"Iteration: {j+1}/{len(rbf_types)*len(reg_values)}")
+        j += 1
         # Train RBFN
-        num_centers = 10
+        num_centers = 100
         model, centers1 = train_rbfn(x1, y1, num_centers, rbf_type, alpha=alpha)
         model2, centers2 = train_rbfn(x2, y2, num_centers, rbf_type, alpha=alpha)
 
@@ -131,7 +159,8 @@ for rbf_type in rbf_types:
         plt.ylabel('y')
         plt.title(f'Sine, RBF: {rbf_type}, alpha: {alpha}')
         plt.legend()
-        plt.savefig(f'Images/RESULTS/{i} - Sine, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Sine, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -145,7 +174,8 @@ for rbf_type in rbf_types:
         plt.ylabel('y')
         plt.title(f'Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
         plt.legend()
-        plt.savefig(f'Images/RESULTS/{i} - Exp Decay, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Exp Decay, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -159,7 +189,8 @@ for rbf_type in rbf_types:
         plt.xlabel('X')
         plt.ylabel('Residuals')
         plt.title(f'Residual Plot - Sine, RBF: {rbf_type}, alpha: {alpha}')
-        plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Sine, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Sine, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Residual Plot - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -170,7 +201,8 @@ for rbf_type in rbf_types:
         plt.xlabel('X')
         plt.ylabel('Residuals')
         plt.title(f'Residual Plot - Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
-        plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Exp Decay, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Exp Decay, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Residual Plot - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -183,7 +215,8 @@ for rbf_type in rbf_types:
         plt.xlabel('Error')
         plt.ylabel('Frequency')
         plt.title(f'Error Distribution (Test) - Sine, RBF: {rbf_type}, alpha: {alpha}')
-        plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Sine, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Sine, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Error Distribution (Test) - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -193,7 +226,8 @@ for rbf_type in rbf_types:
         plt.xlabel('Error')
         plt.ylabel('Frequency')
         plt.title(f'Error Distribution (Test) - Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
-        plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Exp Decay, {rbf_type}, {alpha}.png')
+        #plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Exp Decay, {rbf_type}, {alpha}.png')
+        plt.savefig(f'{dir1}{i} - Error Distribution (Test) - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
@@ -209,15 +243,20 @@ mse_values_test2.sort(key=lambda x: x[2])
 configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mse_values_train]
 mse_scores = [mse for (_, _, mse) in mse_values_train]
 ac_function = "NO ACT"
-#ac_function = "SIGMOID"
-#ac_function = "GAUSSIAN"
+if activation_function == 1:
+    ac_function = "SIGMOID"
+elif activation_function == 2:
+    ac_function = "GAUSSIAN"
+elif activation_function == 3:
+    ac_function = "TANH"
 
 plt.figure(figsize=(17,6))
 plt.barh(configurations, mse_scores)
+plt.xlim(0, 0.4)
 plt.xlabel('Mean Squared Error (MSE)')
 plt.ylabel('Configuration')
 plt.title('Mean Squared Error - Sine (Train)')
-plt.savefig(f'Images/1 - NO ACT vs SIGMOID vs GAUSSIAN/Mean Squared Error - Sine (Train) - {ac_function}.png')
+plt.savefig(f'{dir2}1 - Mean Squared Error - Sine (Train) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
@@ -226,10 +265,11 @@ mse_scores = [mse for (_, _, mse) in mse_values_test]
 
 plt.figure(figsize=(17,6))
 plt.barh(configurations, mse_scores)
+plt.xlim(0, 0.4)
 plt.xlabel('Mean Squared Error (MSE)')
 plt.ylabel('Configuration')
 plt.title('Mean Squared Error - Sine (Test)')
-plt.savefig(f'Images/2 - NO ACT vs SIGMOID vs GAUSSIAN/Mean Squared Error - Sine (Test) - {ac_function}.png')
+plt.savefig(f'{dir2}2 - Mean Squared Error - Sine (Test) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
@@ -238,10 +278,11 @@ mse_scores = [mse for (_, _, mse) in mse_values_train2]
 
 plt.figure(figsize=(17,6))
 plt.barh(configurations, mse_scores)
+plt.xlim(0, 0.003)
 plt.xlabel('Mean Squared Error (MSE)')
 plt.ylabel('Configuration')
 plt.title('Mean Squared Error - Exp Decay (Train)')
-plt.savefig(f'Images/3 - NO ACT vs SIGMOID vs GAUSSIAN/Mean Squared Error - Exp Decay (Train) - {ac_function}.png')
+plt.savefig(f'{dir2}3 - Mean Squared Error - Exp Decay (Train) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
@@ -250,9 +291,10 @@ mse_scores = [mse for (_, _, mse) in mse_values_test2]
 
 plt.figure(figsize=(17,6))
 plt.barh(configurations, mse_scores)
+plt.xlim(0, 1.65)
 plt.xlabel('Mean Squared Error (MSE)')
 plt.ylabel('Configuration')
 plt.title('Mean Squared Error - Exp Decay (Test)')
-plt.savefig(f'Images/4 - NO ACT vs SIGMOID vs GAUSSIAN/Mean Squared Error - Exp Decay (Test) - {ac_function}.png')
+plt.savefig(f'{dir2}4 - Mean Squared Error - Exp Decay (Test) - {ac_function}.png')
 plt.show()
 #plt.clf()
