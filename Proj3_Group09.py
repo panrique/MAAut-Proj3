@@ -8,6 +8,19 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+"""
+Run instructions:
+python Proj3_Group09.py
+
+To run with differente activation functions:
+
+Sigmoid: python Proj3_Group09.py --f 1
+Gaussian: python Proj3_Group09.py --f 2
+TanH: python Proj3_Group09.py --f 3
+
+Any other value runs the code with no activation function
+"""
+
 def gaussian_rbf(x, centers, epsilon=0.7):
     data_std = np.std(x, axis=0) * epsilon
     return np.exp(-(euclidean_distances(x, centers) ** 2) / (data_std ** 2))
