@@ -2,7 +2,7 @@ import numpy as np
 import os
 import argparse
 from sklearn.cluster import KMeans
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
@@ -97,6 +97,7 @@ np.random.seed(42)
 
 # Create Directories to save plots if they dont exist yet
 dir1, dir2 = "Images/Analysis/", "Images/Activation Functions/"
+#dir1, dir2 = "Images/test - Analysis/", "Images/test - Activation Functions/"
 dirs = [dir1, dir2]
 for dir in dirs:
     isExist = os.path.exists(dir)
@@ -117,23 +118,27 @@ x1, X_test = train_test_split(x, test_size=0.3)
 x1, X_test = np.sort(x1, axis=0), np.sort(X_test, axis=0)
 y1 = np.sin(x1) + np.random.normal(0, 0.1, x1.shape)
 y_test = np.sin(X_test) + np.random.normal(0, 0.1, X_test.shape)
+sine_mean_train = np.mean(np.absolute(y1))
+sine_mean_test = np.mean(np.absolute(y_test))
 
 # Exponential Decay Function
-x = np.linspace(0, 1000, 1000).reshape(-1, 1)
+x = np.linspace(0, 50, 1000).reshape(-1, 1)
 x2, X_test2 = train_test_split(x, test_size=0.3)
 x2, X_test2 = np.sort(x2, axis=0), np.sort(X_test2, axis=0)
 y2 = np.exp(-x2 / 2) + np.random.normal(0, 0.05, x2.shape)
 y_test2 = np.exp(-X_test2 / 2) + np.random.normal(0, 0.05, X_test2.shape)
+exp_mean_train = np.mean(np.absolute(y2))
+exp_mean_test = np.mean(np.absolute(y_test2))
 
 # Define the options for RBF type, regression type, and clustering algorithm
 rbf_types = ['gaussian', 'multiquadric', 'inverse_multiquadric', 'thin_plate_spline']
 reg_values = [0.0001, 0.001, 0.01, 0.1, 1, 10]
 
 # Perform the comparisons
-mse_values_train = []
-mse_values_test = []
-mse_values_train2 = []
-mse_values_test2 = []
+mae_values_train = []
+mae_values_test = []
+mae_values_train2 = []
+mae_values_test2 = []
 i = 1
 j = 0
 for rbf_type in rbf_types:
@@ -151,15 +156,15 @@ for rbf_type in rbf_types:
         y_pred = predict_rbfn(X_test, model, centers1, rbf_type)
         y_pred2 = predict_rbfn(X_test2, model2, centers2, rbf_type)
 
-        # calculate mse
-        mse = mean_squared_error(y1, y_pred_train)
-        mse_values_train.append((rbf_type, alpha, mse))
-        mse = mean_squared_error(y_test, y_pred)
-        mse_values_test.append((rbf_type, alpha, mse))
-        mse = mean_squared_error(y2, y_pred2_train)
-        mse_values_train2.append((rbf_type, alpha, mse))
-        mse = mean_squared_error(y_test2, y_pred2)
-        mse_values_test2.append((rbf_type, alpha, mse))
+        # calculate mae
+        mae = mean_absolute_error(y1, y_pred_train)
+        mae_values_train.append((rbf_type, alpha, mae))
+        mae = mean_absolute_error(y_test, y_pred)
+        mae_values_test.append((rbf_type, alpha, mae))
+        mae = mean_absolute_error(y2, y_pred2_train)
+        mae_values_train2.append((rbf_type, alpha, mae))
+        mae = mean_absolute_error(y_test2, y_pred2)
+        mae_values_test2.append((rbf_type, alpha, mae))
 
         # Plot the results
         # region RBNF Approximation 
@@ -172,7 +177,6 @@ for rbf_type in rbf_types:
         plt.ylabel('y')
         plt.title(f'Sine, RBF: {rbf_type}, alpha: {alpha}')
         plt.legend()
-        #plt.savefig(f'Images/RESULTS/{i} - Sine, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
@@ -187,7 +191,6 @@ for rbf_type in rbf_types:
         plt.ylabel('y')
         plt.title(f'Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
         plt.legend()
-        #plt.savefig(f'Images/RESULTS/{i} - Exp Decay, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
@@ -202,7 +205,6 @@ for rbf_type in rbf_types:
         plt.xlabel('X')
         plt.ylabel('Residuals')
         plt.title(f'Residual Plot - Sine, RBF: {rbf_type}, alpha: {alpha}')
-        #plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Sine, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Residual Plot - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
@@ -214,7 +216,6 @@ for rbf_type in rbf_types:
         plt.xlabel('X')
         plt.ylabel('Residuals')
         plt.title(f'Residual Plot - Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
-        #plt.savefig(f'Images/RESULTS/{i} - Residual Plot - Exp Decay, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Residual Plot - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
@@ -228,7 +229,6 @@ for rbf_type in rbf_types:
         plt.xlabel('Error')
         plt.ylabel('Frequency')
         plt.title(f'Error Distribution (Test) - Sine, RBF: {rbf_type}, alpha: {alpha}')
-        #plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Sine, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Error Distribution (Test) - Sine, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
@@ -239,22 +239,21 @@ for rbf_type in rbf_types:
         plt.xlabel('Error')
         plt.ylabel('Frequency')
         plt.title(f'Error Distribution (Test) - Exp Decay, RBF: {rbf_type}, alpha: {alpha}')
-        #plt.savefig(f'Images/RESULTS/{i} - Error Distribution (Test) - Exp Decay, {rbf_type}, {alpha}.png')
         plt.savefig(f'{dir1}{i} - Error Distribution (Test) - Exp Decay, {rbf_type}, {alpha}.png')
         #plt.show()
         plt.close()
         i += 1
         # endregion Residuals"""
 
-# Sort MSE values in ascending order
-mse_values_train.sort(key=lambda x: x[2])
-mse_values_test.sort(key=lambda x: x[2])
-mse_values_train2.sort(key=lambda x: x[2])
-mse_values_test2.sort(key=lambda x: x[2])
+# Sort mae values in ascending order
+mae_values_train.sort(key=lambda x: x[2])
+mae_values_test.sort(key=lambda x: x[2])
+mae_values_train2.sort(key=lambda x: x[2])
+mae_values_test2.sort(key=lambda x: x[2])
 
-# Plot the MSE values
-configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mse_values_train]
-mse_scores = [mse for (_, _, mse) in mse_values_train]
+# Plot the mae values
+configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mae_values_train]
+mae_scores = [mae for (_, _, mae) in mae_values_train]
 ac_function = "NO ACT"
 if activation_function == 1:
     ac_function = "SIGMOID"
@@ -262,52 +261,61 @@ elif activation_function == 2:
     ac_function = "GAUSSIAN"
 elif activation_function == 3:
     ac_function = "TANH"
+    
 
 plt.figure(figsize=(17,6))
-plt.barh(configurations, mse_scores)
-plt.xlim(0, 0.4)
-plt.xlabel('Mean Squared Error (MSE)')
+plt.barh(configurations, mae_scores)
+# Draw the baseline to compare mae
+plt.axvline(x=sine_mean_train, color='red', linestyle='--')
+plt.xlim(0, 0.65)
+plt.xlabel('Mean Absolute Error (mae)')
 plt.ylabel('Configuration')
-plt.title('Mean Squared Error - Sine (Train)')
-plt.savefig(f'{dir2}1 - Mean Squared Error - Sine (Train) - {ac_function}.png')
+plt.title('Mean Absolute Error - Sine (Train)')
+plt.savefig(f'{dir2}1 - Mean Absolute Error - Sine (Train) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
-configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mse_values_test]
-mse_scores = [mse for (_, _, mse) in mse_values_test]
 
+configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mae_values_test]
+mae_scores = [mae for (_, _, mae) in mae_values_test]
 plt.figure(figsize=(17,6))
-plt.barh(configurations, mse_scores)
-plt.xlim(0, 0.4)
-plt.xlabel('Mean Squared Error (MSE)')
+plt.barh(configurations, mae_scores)
+# Draw the baseline to compare mae
+plt.axvline(x=sine_mean_test, color='red', linestyle='--')
+plt.xlim(0, 0.65)
+plt.xlabel('Mean Absolute Error (mae)')
 plt.ylabel('Configuration')
-plt.title('Mean Squared Error - Sine (Test)')
-plt.savefig(f'{dir2}2 - Mean Squared Error - Sine (Test) - {ac_function}.png')
+plt.title('Mean Absolute Error - Sine (Test)')
+plt.savefig(f'{dir2}2 - Mean Absolute Error - Sine (Test) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
-configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mse_values_train2]
-mse_scores = [mse for (_, _, mse) in mse_values_train2]
 
+configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mae_values_train2]
+mae_scores = [mae for (_, _, mae) in mae_values_train2]
 plt.figure(figsize=(17,6))
-plt.barh(configurations, mse_scores)
-plt.xlim(0, 0.003)
-plt.xlabel('Mean Squared Error (MSE)')
+plt.barh(configurations, mae_scores)
+# Draw the baseline to compare mae
+plt.axvline(x=exp_mean_train, color='red', linestyle='--')
+plt.xlim(0, 0.08)
+plt.xlabel('Mean Absolute Error (mae)')
 plt.ylabel('Configuration')
-plt.title('Mean Squared Error - Exp Decay (Train)')
-plt.savefig(f'{dir2}3 - Mean Squared Error - Exp Decay (Train) - {ac_function}.png')
+plt.title('Mean Absolute Error - Exp Decay (Train)')
+plt.savefig(f'{dir2}3 - Mean Absolute Error - Exp Decay (Train) - {ac_function}.png')
 plt.show()
 #plt.clf()
 
-configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mse_values_test2]
-mse_scores = [mse for (_, _, mse) in mse_values_test2]
 
+configurations = [f'{rbf}_{alpha}' for (rbf, alpha, _) in mae_values_test2]
+mae_scores = [mae for (_, _, mae) in mae_values_test2]
 plt.figure(figsize=(17,6))
-plt.barh(configurations, mse_scores)
-plt.xlim(0, 1.65)
-plt.xlabel('Mean Squared Error (MSE)')
+plt.barh(configurations, mae_scores)
+# Draw the baseline to compare mae
+plt.axvline(x=exp_mean_test, color='red', linestyle='--')
+plt.xlim(0, 0.35)
+plt.xlabel('Mean Absolute Error (mae)')
 plt.ylabel('Configuration')
-plt.title('Mean Squared Error - Exp Decay (Test)')
-plt.savefig(f'{dir2}4 - Mean Squared Error - Exp Decay (Test) - {ac_function}.png')
+plt.title('Mean Absolute Error - Exp Decay (Test)')
+plt.savefig(f'{dir2}4 - Mean Absolute Error - Exp Decay (Test) - {ac_function}.png')
 plt.show()
 #plt.clf()
